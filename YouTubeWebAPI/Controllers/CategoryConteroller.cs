@@ -39,15 +39,13 @@ namespace YouTubeWebAPI.Controllers
         }
 
         [HttpGet("pokemon/{categoryId}")]
-        [ProducesResponseType(200,Type = typeof(IEnumerable<Pokemon>))]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<Pokemon>))]
         [ProducesResponseType(400)]
-        public IActionResult GetPokemonsByCategory(int CategoryId)
+        public IActionResult GetPokemonByCategoryId(int categoryId)
         {
-            ICollection<Pokemon> pokemons = _category.GetPokemonByCategory(CategoryId);
-            if (!ModelState.IsValid)
-                return BadRequest();
-            
-            
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var pokemons = _category.GetPokemonByCategory(categoryId);
             return Ok(pokemons);
         }
     }
