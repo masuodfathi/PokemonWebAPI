@@ -14,17 +14,24 @@ namespace YouTubeWebAPI.Repository
 
         public Pokemon GetPokemon(int id)
         {
-            throw new NotImplementedException();
+            return _context.Pokemons.Where(p => p.Id == id).FirstOrDefault();
         }
 
         public Pokemon GetPokemon(string name)
         {
-            throw new NotImplementedException();
+            return _context.Pokemons.Where(p => p.Name == name).FirstOrDefault();
         }
 
         public decimal GetPokemonRating(int pokemonId)
         {
-            throw new NotImplementedException();
+            var reviews = _context.Reviews.Where(p => p.Pokemon.Id == pokemonId);
+            //decimal rating = 0;
+            //foreach (var review in reviews)
+            //{
+            //    rating += review.Rating;
+            //}
+            //return rating/reviews.Count();
+            return ((decimal)reviews.Sum(r=>r.Rating)/reviews.Count());
         }
 
         public ICollection<Pokemon> GetPokemons()
@@ -34,7 +41,7 @@ namespace YouTubeWebAPI.Repository
 
         public bool PokemonExist(int pokemonId)
         {
-            throw new NotImplementedException();
+            return _context.Pokemons.Any(p => p.Id == pokemonId);
         }
     }
 }
