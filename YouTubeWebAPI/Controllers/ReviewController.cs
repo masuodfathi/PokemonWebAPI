@@ -4,6 +4,8 @@ using YouTubeWebAPI.Models;
 
 namespace YouTubeWebAPI.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class ReviewController : Controller
     {
         private readonly IReviewRepository _reviewRepository;
@@ -34,7 +36,7 @@ namespace YouTubeWebAPI.Controllers
             return Ok(review);
         }
 
-        [HttpGet("pokemon/{reviewId}")]
+        [HttpGet("reviews/{pokemonId}")]
         [ProducesResponseType(200, Type = typeof(Review))]
         [ProducesResponseType(400)]
         public ActionResult GetReviewForAPokemon(int pokemonId)
