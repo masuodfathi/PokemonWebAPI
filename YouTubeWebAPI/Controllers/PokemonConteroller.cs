@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using YouTubeWebAPI.DTOs;
 using YouTubeWebAPI.Interface;
 using YouTubeWebAPI.Models;
 
@@ -52,6 +53,14 @@ namespace YouTubeWebAPI.Controllers
                 return BadRequest();
             var rating = _pokemonRepository.GetPokemonRating(pokeId);
             return Ok(rating);
+        }
+
+        [HttpPost]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public IActionResult CreatePokemon(PokemonDto newPokemon)
+        {
+
         }
     }
 }
