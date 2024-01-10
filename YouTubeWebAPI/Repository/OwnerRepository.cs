@@ -11,6 +11,13 @@ namespace YouTubeWebAPI.Repository
         {
             _context = context;
         }
+
+        public bool CreateOwner(Owner owner)
+        {
+            _context.Owners.Add(owner);
+            return Save();
+        }
+
         public Owner GetOwner(string firstName)
         {
             return _context.Owners.Where(o => o.FirstName == firstName).FirstOrDefault();
@@ -39,6 +46,19 @@ namespace YouTubeWebAPI.Repository
         public bool OwnerExist(int ownerId)
         {
             return _context.Owners.Any(o => o.Id == ownerId);
+        }
+
+        public bool Save()
+        {
+            try
+            {
+                var save = _context.SaveChanges();
+                return save > 0 ? true : false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }
