@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using YouTubeWebAPI.DTOs;
 using YouTubeWebAPI.Interface;
 using YouTubeWebAPI.Models;
 
@@ -9,9 +11,13 @@ namespace YouTubeWebAPI.Controllers
     public class OwnerController : Controller
     {
         private readonly IOwnerRepository _ownerRepository;
-        public OwnerController(IOwnerRepository ownerRepository)
+        private readonly ICountryRepository _countryRepository;
+        private readonly IMapper _mapper;
+        public OwnerController(IOwnerRepository ownerRepository,ICountryRepository countryRepository, IMapper mapper)
         {
             _ownerRepository = ownerRepository;
+            _countryRepository = countryRepository;
+            _mapper = mapper;
         }
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(IEnumerable<Owner>))]
@@ -49,6 +55,29 @@ namespace YouTubeWebAPI.Controllers
 
             var pokemons = _ownerRepository.GetPokemonByOwner(ownerId);
             return Ok(pokemons);
+        }
+        [HttpPost]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public IActionResult CreateOwner(OwnerDto newOwner)
+        {
+            var owner  = _ownerRepository.GetOwners()
+                .Where(o => o.FirstName.Trim().ToUpper() == newOwner.FirstName.Trim().ToUpper()).FirstOrDefault();
+
+            if (owner != null)
+                ModelState.AddModelError("Error", "This firstname already exist!");
+
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var ownerMap = _mapper.Map<Owner>(newOwner);
+            ownerMap.Country = _countryRepository.GetCountry(newOwner.CountryId);
+            if (!_ownerRepository.CreateOwner(ownerMap))
+            {
+                ModelState.AddModelError("Server Error", "Somthing went wrong while saving...!");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("Owner has created successfully!");
         }
     }
 }
