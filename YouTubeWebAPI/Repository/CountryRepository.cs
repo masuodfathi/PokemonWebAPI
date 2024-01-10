@@ -16,6 +16,12 @@ namespace YouTubeWebAPI.Repository
             return _contex.Countries.Any(c => c.Id == id);
         }
 
+        public bool CreateCountry(Country country)
+        {
+            _contex.Countries.Add(country);
+            return Save();
+        }
+
         public ICollection<Country> GetCountries()
         {
             var countryList = _contex.Countries.ToList();
@@ -41,6 +47,20 @@ namespace YouTubeWebAPI.Repository
         public ICollection<Owner> GetOwnersFromACountry(int countryId)
         {
             return _contex.Owners.Where(o => o.Country.Id == countryId).ToList();
+        }
+
+        public bool Save()
+        {
+            try
+            {
+                var save = _contex.SaveChanges();
+                return save > 0 ? true : false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            
         }
     }
 }
