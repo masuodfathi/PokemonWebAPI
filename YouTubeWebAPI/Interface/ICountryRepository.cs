@@ -10,5 +10,7 @@ namespace YouTubeWebAPI.Interface
         Country GetCountryByOwner(int  ownerId);
         ICollection<Owner> GetOwnersFromACountry(int countryId);
         bool CountryExsits(int id);
+        bool CreateCountry(Country country);
+        bool Save();
     }
 }
