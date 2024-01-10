@@ -12,6 +12,12 @@ namespace YouTubeWebAPI.Repository
             _context = dataContext;
         }
 
+        public bool CreatePokemon(Pokemon pokemon)
+        {
+            _context.Pokemons.Add(pokemon);
+            return Save();
+        }
+
         public Pokemon GetPokemon(int id)
         {
             return _context.Pokemons.Where(p => p.Id == id).FirstOrDefault();
@@ -42,6 +48,19 @@ namespace YouTubeWebAPI.Repository
         public bool PokemonExist(int pokemonId)
         {
             return _context.Pokemons.Any(p => p.Id == pokemonId);
+        }
+
+        public bool Save()
+        {
+            try
+            {
+                var save = _context.SaveChanges();
+                return save > 0 ? true : false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }
