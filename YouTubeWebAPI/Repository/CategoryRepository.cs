@@ -16,9 +16,16 @@ namespace YouTubeWebAPI.Repository
             return _context.Categories.Any(c => c.Id == Id);
         }
 
+        public bool CreateCategory(Category category)
+        {
+            _context.Categories.Add(category);
+            return Save();
+
+        }
+
         public ICollection<Category> GetCategories()
         {
-            return _context.Categories.OrderBy(c => c.Name).ToList();
+            return _context.Categories.ToList();
         }
 
         public Category GetCategory(int id)
@@ -29,6 +36,21 @@ namespace YouTubeWebAPI.Repository
         public ICollection<Pokemon> GetPokemonByCategory(int categoryId)
         {
             return _context.PokemonCategories.Where(pc => pc.CategoryID == categoryId).Select(pc => pc.Pokemon).ToList();
+        }
+
+        public bool Save()
+        {
+            try
+            {
+                var saved = _context.SaveChanges();
+                return saved > 0 ? true : false;
+            }
+            catch
+            {
+                return false;
+            }
+            
+
         }
     }
 }
