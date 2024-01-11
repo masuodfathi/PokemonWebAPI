@@ -1,4 +1,5 @@
-﻿using YouTubeWebAPI.Models;
+﻿using YouTubeWebAPI.DTOs;
+using YouTubeWebAPI.Models;
 
 namespace YouTubeWebAPI.Interface
 {
@@ -9,7 +10,7 @@ namespace YouTubeWebAPI.Interface
         Pokemon GetPokemon(string name);
         decimal GetPokemonRating(int pokemonId);
         bool PokemonExist(int pokemonId);
-        bool CreatePokemon(Pokemon pokemon);
+        bool CreatePokemon(PokemonDto pokemonDto);
         bool Save();
     }
 }

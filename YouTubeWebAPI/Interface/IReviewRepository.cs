@@ -8,5 +8,7 @@ namespace YouTubeWebAPI.Interface
         Review GetReview(int reviewId);
         ICollection<Review> GetReviewsOfPokemon(int pokemonId);
         bool ReviewExist(int reviewId);
+        bool CreateReview(Review review);
+        bool Save();
     }
 }
