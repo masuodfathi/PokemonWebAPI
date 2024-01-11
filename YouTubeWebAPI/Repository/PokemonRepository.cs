@@ -1,4 +1,6 @@
-﻿using YouTubeWebAPI.Data;
+﻿using AutoMapper;
+using YouTubeWebAPI.Data;
+using YouTubeWebAPI.DTOs;
 using YouTubeWebAPI.Interface;
 using YouTubeWebAPI.Models;
 
@@ -7,14 +9,36 @@ namespace YouTubeWebAPI.Repository
     public class PokemonRepository : IPokemonRepository
     {
         private readonly DataContext _context;
-        public PokemonRepository(DataContext dataContext) 
+        private readonly IMapper _mapper;
+        public PokemonRepository(DataContext dataContext, IMapper mapper) 
         {
             _context = dataContext;
+            _mapper = mapper;
         }
 
-        public bool CreatePokemon(Pokemon pokemon)
+        public bool CreatePokemon(PokemonDto pokemonDto)
         {
+            var owner = _context.Owners.Where(x => x.Id == pokemonDto.OwnerId).FirstOrDefault();
+            var category = _context.Categories.Where(x => x.Id == pokemonDto.CategoryId).FirstOrDefault();
+            var pokemon = _mapper.Map<Pokemon>(pokemonDto);
+
+            var pokemonOwner = new PokemonOwner()
+            {
+                Owner = owner,
+                Pokemon = pokemon
+            };
+
+            _context.PokemonOwners.Add(pokemonOwner);
+
+            var pokemonCategory = new PokemonCategory()
+            {
+                Category = category,
+                Pokemon = pokemon
+            };
+
+            _context.PokemonCategories.Add(pokemonCategory);
             _context.Pokemons.Add(pokemon);
+
             return Save();
         }
 

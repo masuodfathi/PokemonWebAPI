@@ -12,6 +12,13 @@ namespace YouTubeWebAPI.Repository
         {
             _context = context;
         }
+
+        public bool CreateReviewer(Reviewer reviewer)
+        {
+            _context.Reviewers.Add(reviewer);
+            return Save();
+        }
+
         public Reviewer GetReviewer(int id)
         {
             return _context.Reviewers.Where(r => r.Id == id).Include(re=>re.Reviews).FirstOrDefault();
@@ -30,6 +37,19 @@ namespace YouTubeWebAPI.Repository
         public bool ReviewerExist(int reviewerId)
         {
             return _context.Reviewers.Any(r => r.Id == reviewerId);
+        }
+
+        public bool Save()
+        {
+            try
+            {
+                var save = _context.SaveChanges();
+                return save > 0 ? true : false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }
