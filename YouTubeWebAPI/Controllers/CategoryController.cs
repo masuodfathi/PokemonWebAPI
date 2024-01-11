@@ -8,11 +8,11 @@ namespace YouTubeWebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoryConteroller : Controller
+    public class CategoryController : Controller
     {
         private readonly ICategoryRepository _category;
         private readonly IMapper _mapper;
-        public CategoryConteroller(ICategoryRepository category, IMapper mapper)
+        public CategoryController(ICategoryRepository category, IMapper mapper)
         {
             _category = category;
             _mapper = mapper;

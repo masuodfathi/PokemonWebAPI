@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using YouTubeWebAPI.DTOs;
 using YouTubeWebAPI.Interface;
 using YouTubeWebAPI.Models;
@@ -7,12 +8,16 @@ namespace YouTubeWebAPI.Controllers
 {
     [Route("api/[Controller]")]
     [ApiController]
-    public class PokemonConteroller : Controller
+    public class PokemonController : Controller
     {
         private readonly IPokemonRepository _pokemonRepository;
-        public PokemonConteroller(IPokemonRepository pokemonRepository)
+        private readonly IOwnerRepository _ownerRepository;
+        private readonly IMapper _mapper;
+        public PokemonController(IPokemonRepository pokemonRepository, IOwnerRepository ownerRepository, IMapper mapper)
         {
             _pokemonRepository = pokemonRepository;
+            _ownerRepository = ownerRepository;
+            _mapper = mapper;
         }
         [HttpGet]
         [ProducesResponseType(200, Type = typeof(IEnumerable<Pokemon>))]
@@ -58,9 +63,31 @@ namespace YouTubeWebAPI.Controllers
         [HttpPost]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public IActionResult CreatePokemon(PokemonDto newPokemon)
+        public IActionResult CreatePokemon([FromBody]PokemonDto newPokemon)
         {
+            if (newPokemon == null)
+                return BadRequest(ModelState);
 
+            var pokemon = _pokemonRepository.GetPokemons().Where(p => p.Name.Trim().ToUpper() == newPokemon.Name.Trim().ToUpper()).SingleOrDefault();
+
+            if(pokemon != null)
+            {
+                ModelState.AddModelError("Error", "The name already exist!");
+                return StatusCode(422,ModelState);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!_pokemonRepository.CreatePokemon(newPokemon))
+            {
+                ModelState.AddModelError("Error", "Somthing went wrong while saving...!");
+                return StatusCode(500,ModelState);
+            }
+
+            return Ok("Pokemon has created successfully!");
         }
     }
 }

@@ -59,7 +59,7 @@ namespace YouTubeWebAPI.Controllers
         [HttpPost]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public IActionResult CreateOwner(OwnerDto newOwner)
+        public IActionResult CreateOwner([FromBody]OwnerDto newOwner)
         {
             var owner  = _ownerRepository.GetOwners()
                 .Where(o => o.FirstName.Trim().ToUpper() == newOwner.FirstName.Trim().ToUpper()).FirstOrDefault();

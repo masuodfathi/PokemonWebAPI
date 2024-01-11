@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using YouTubeWebAPI.DTOs;
 using YouTubeWebAPI.Interface;
 using YouTubeWebAPI.Models;
 
@@ -9,9 +11,11 @@ namespace YouTubeWebAPI.Controllers
     public class ReviewerController : Controller
     {
         private readonly IReviewerRepository _reviewerRepository;
-        public ReviewerController(IReviewerRepository reviewerRepository)
+        private readonly IMapper _mapper;
+        public ReviewerController(IReviewerRepository reviewerRepository, IMapper mapper)
         {
             _reviewerRepository = reviewerRepository;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -54,6 +58,25 @@ namespace YouTubeWebAPI.Controllers
 
             var reviews = _reviewerRepository.GetReviewsByReviewer(reviewerId);
             return Ok(reviews);
+        }
+        [HttpPost]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public IActionResult CreateReviewer([FromBody] ReviewerDto newReviewer)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if(newReviewer == null)
+                return BadRequest(ModelState);
+
+            var reviewerMap = _mapper.Map<Reviewer>(newReviewer);
+            if (!_reviewerRepository.CreateReviewer(reviewerMap))
+            {
+                ModelState.AddModelError("Save error", "Somthing went wrong while saving...!");
+                return StatusCode(500,ModelState);
+            }
+            return Ok("New reviewer added successfully!");
         }
     }
 }

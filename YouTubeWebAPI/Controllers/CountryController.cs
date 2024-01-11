@@ -53,7 +53,7 @@ namespace YouTubeWebAPI.Controllers
         [HttpPost]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public IActionResult CreateCountry(CountryDto country)
+        public IActionResult CreateCountry([FromBody] CountryDto country)
         {
             var con = _country.GetCountries().Where(c=>c.Name.Trim().ToUpper() ==  country.Name.Trim().ToUpper()).FirstOrDefault();
             if (con != null)
