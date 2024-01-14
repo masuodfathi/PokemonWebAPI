@@ -11,6 +11,7 @@ namespace YouTubeWebAPI.Interface
         decimal GetPokemonRating(int pokemonId);
         bool PokemonExist(int pokemonId);
         bool CreatePokemon(PokemonDto pokemonDto);
+        bool UpdatePokemon(Pokemon pokemon);
         bool Save();
     }
 }

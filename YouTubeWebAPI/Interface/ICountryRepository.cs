@@ -11,6 +11,7 @@ namespace YouTubeWebAPI.Interface
         ICollection<Owner> GetOwnersFromACountry(int countryId);
         bool CountryExsits(int id);
         bool CreateCountry(Country country);
+        bool UpdateCountry(Country country);
         bool Save();
     }
 }

@@ -9,6 +9,7 @@ namespace YouTubeWebAPI.Interface
         ICollection<Pokemon> GetPokemonByCategory(int categoryId);
         bool CategoryExist(int Id);
         bool CreateCategory(Category category);
+        bool UpdateCategory(Category category);
         bool Save();
     }
 }

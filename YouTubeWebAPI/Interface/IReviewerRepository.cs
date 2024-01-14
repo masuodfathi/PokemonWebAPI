@@ -9,6 +9,7 @@ namespace YouTubeWebAPI.Interface
         ICollection<Review> GetReviewsByReviewer(int reviewerId);
         bool ReviewerExist(int reviewerId);
         bool CreateReviewer(Reviewer reviewer);
+        bool UpdateReviewer(Reviewer reviewer);
         bool Save();
         
     }
