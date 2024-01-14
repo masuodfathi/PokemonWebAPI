@@ -82,5 +82,35 @@ namespace YouTubeWebAPI.Controllers
             return Ok("Review has added successfully!");
             
         }
+
+        [HttpPut]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        public IActionResult UpdateReview(ReviewDto updatedReview)
+        {
+            if (updatedReview == null)
+                return BadRequest(ModelState);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_reviewRepository.ReviewExist(updatedReview.Id))
+            {
+                ModelState.AddModelError("Error", "Not Found");
+                return StatusCode(404, ModelState);
+            }
+
+            var updatedReviewMap = _mapper.Map<Review>(updatedReview);
+            updatedReviewMap.Reviewer = _reviewerRepository.GetReviewer(updatedReview.ReviewerId);
+            updatedReviewMap.Pokemon = _pokeRepository.GetPokemon(updatedReview.PokemonId);
+            if (!_reviewRepository.UpdateReview(updatedReviewMap))
+            {
+                ModelState.AddModelError("Server Error", "Something went wrong while saving...!");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Review updated successfully");
+        }
     }
 }
