@@ -89,5 +89,33 @@ namespace YouTubeWebAPI.Controllers
 
             return Ok("Pokemon has created successfully!");
         }
+
+        [HttpPut]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        public IActionResult UpdatePokemon(PokemonDto updatedPokemon)
+        {
+            if (updatedPokemon == null)
+                return BadRequest(ModelState);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_pokemonRepository.PokemonExist(updatedPokemon.Id))
+            {
+                ModelState.AddModelError("Error", "Not Found");
+                return StatusCode(404, ModelState);
+            }
+
+            var updatedPokemonMap = _mapper.Map<Pokemon>(updatedPokemon);
+            if (!_pokemonRepository.UpdatePokemon(updatedPokemonMap))
+            {
+                ModelState.AddModelError("Server Error", "Something went wrong while saving...!");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Pokemon updated successfully");
+        }
     }
 }
