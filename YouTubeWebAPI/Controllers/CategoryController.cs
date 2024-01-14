@@ -82,6 +82,31 @@ namespace YouTubeWebAPI.Controllers
             return Ok("Category successfully created!");
 
         }
+
+        [HttpPut]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public IActionResult UpdateCategort(CategoryDto updatedCategory)
+        {
+            if (updatedCategory == null)
+                return BadRequest(ModelState);
+
+            if (!_category.CategoryExist(updatedCategory.Id))
+                return NotFound();
+
+            if (!ModelState.IsValid) 
+                return BadRequest();
+
+            var categoryMap = _mapper.Map<Category>(updatedCategory);
+            if (!_category.UpdateCategory(categoryMap))
+            {
+                ModelState.AddModelError("Error", "Something went wrong while saving...!");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Category updated successfully");
+        }
     }
     
 }
