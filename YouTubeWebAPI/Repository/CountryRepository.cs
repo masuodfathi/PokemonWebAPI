@@ -62,5 +62,11 @@ namespace YouTubeWebAPI.Repository
             }
             
         }
+
+        public bool UpdateCountry(Country country)
+        {
+            _contex.Update(country);
+            return Save();
+        }
     }
 }

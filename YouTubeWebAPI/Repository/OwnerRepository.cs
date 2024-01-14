@@ -60,5 +60,11 @@ namespace YouTubeWebAPI.Repository
                 return false;
             }
         }
+
+        public bool UpdateOwner(Owner owner)
+        {
+            _context.Owners.Update(owner);
+            return Save();
+        }
     }
 }

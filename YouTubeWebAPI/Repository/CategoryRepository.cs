@@ -52,5 +52,11 @@ namespace YouTubeWebAPI.Repository
             
 
         }
+
+        public bool UpdateCategory(Category category)
+        {
+            _context.Categories.Update(category);
+            return Save();
+        }
     }
 }

@@ -50,5 +50,11 @@ namespace YouTubeWebAPI.Repository
                 return false;
             }
         }
+
+        public bool UpdateReview(Review review)
+        {
+            _context.Reviews.Update(review);
+            return Save();
+        }
     }
 }
