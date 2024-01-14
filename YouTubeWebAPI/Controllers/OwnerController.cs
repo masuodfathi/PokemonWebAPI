@@ -79,5 +79,34 @@ namespace YouTubeWebAPI.Controllers
             }
             return Ok("Owner has created successfully!");
         }
+
+        [HttpPut]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        public IActionResult UpdateOwner(OwnerDto updatedOwner)
+        {
+            if (updatedOwner == null)
+                return BadRequest(ModelState);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_ownerRepository.OwnerExist(updatedOwner.Id))
+            {
+                ModelState.AddModelError("Error", "Not Found");
+                return StatusCode(404, ModelState);
+            }
+
+            var updatedOwnerMap = _mapper.Map<Owner>(updatedOwner);
+            updatedOwnerMap.Country = _countryRepository.GetCountry(updatedOwner.CountryId);
+            if (!_ownerRepository.UpdateOwner(updatedOwnerMap))
+            {
+                ModelState.AddModelError("Server Error", "Something went wrong while saving...!");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Owner updated successfully");
+        }
     }
 }
