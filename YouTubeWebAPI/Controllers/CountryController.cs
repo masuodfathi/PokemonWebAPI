@@ -73,5 +73,32 @@ namespace YouTubeWebAPI.Controllers
             }
             return Ok("Country is created successfully");
         }
+        [HttpPut]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        public IActionResult UpdateCountry(CountryDto updatedCountry)
+        {
+            if(updatedCountry == null)
+                return BadRequest(ModelState);
+
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_country.CountryExsits(updatedCountry.Id))
+            {
+                ModelState.AddModelError("Error", "Not Found");
+                return StatusCode(404, ModelState);
+            }
+
+            var updatedCountryMap = _mapper.Map<Country>(updatedCountry);
+            if (!_country.UpdateCountry(updatedCountryMap))
+            {
+                ModelState.AddModelError("Server Error", "Something went wrong while saving...!");
+                return StatusCode(500,ModelState);
+            }
+
+            return Ok("Country updated successfully");
+        }
     }
 }
