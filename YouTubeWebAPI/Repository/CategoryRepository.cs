@@ -23,6 +23,17 @@ namespace YouTubeWebAPI.Repository
 
         }
 
+        public bool DeleteCategory(int id)
+        {
+            var categoryToDelete = _context.Categories.Find(id);
+            if (categoryToDelete != null)
+            {
+                _context.Categories.Remove(categoryToDelete);
+                return Save();
+            }
+            return false;
+        }
+
         public ICollection<Category> GetCategories()
         {
             return _context.Categories.ToList();
