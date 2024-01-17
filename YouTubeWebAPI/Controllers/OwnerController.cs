@@ -108,5 +108,28 @@ namespace YouTubeWebAPI.Controllers
 
             return Ok("Owner updated successfully");
         }
+
+        [HttpDelete("{ownerId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public IActionResult DeleteOwner(int ownerId)
+        {
+            if (!_ownerRepository.OwnerExist(ownerId))
+            {
+                ModelState.AddModelError("Error", "Owner does not exist!");
+                return StatusCode(404, ModelState);
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            if (!_ownerRepository.DeleteOwner(ownerId))
+            {
+                ModelState.AddModelError("Server Error", "Somthing went wrong while deleting owner...!");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("owner deleted!");
+        }
     }
 }

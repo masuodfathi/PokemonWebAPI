@@ -112,5 +112,28 @@ namespace YouTubeWebAPI.Controllers
 
             return Ok("Review updated successfully");
         }
+
+        [HttpDelete("{reviewId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public IActionResult DeleteReview(int reviewId)
+        {
+            if (!_reviewRepository.ReviewExist(reviewId))
+            {
+                ModelState.AddModelError("Error", "Review does not exist!");
+                return StatusCode(404, ModelState);
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            if (!_reviewRepository.DeleteReview(reviewId))
+            {
+                ModelState.AddModelError("Server Error", "Somthing went wrong while deleting review...!");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("Review deleted!");
+        }
     }
 }

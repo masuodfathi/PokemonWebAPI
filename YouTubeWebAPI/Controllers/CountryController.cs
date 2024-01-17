@@ -100,5 +100,28 @@ namespace YouTubeWebAPI.Controllers
 
             return Ok("Country updated successfully");
         }
+
+        [HttpDelete("{countryId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public IActionResult DeleteCountry(int countryId)
+        {
+            if (!_country.CountryExsits(countryId))
+            {
+                ModelState.AddModelError("Error", "Country does not exist!");
+                return StatusCode(404, ModelState);
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            if (!_country.DeleteCountry(countryId))
+            {
+                ModelState.AddModelError("Server Error", "Somthing went wrong while deleting country...!");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("Country deleted!");
+        }
     }
 }

@@ -107,6 +107,29 @@ namespace YouTubeWebAPI.Controllers
 
             return Ok("Category updated successfully");
         }
+
+        [HttpDelete("{categoryId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public IActionResult DeleteCategort(int categoryId)
+        {
+            if (!_category.CategoryExist(categoryId))
+            {
+                ModelState.AddModelError("Error", "Category does not exist!");
+                return StatusCode(404, ModelState);
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            if (!_category.DeleteCategory(categoryId))
+            {
+                ModelState.AddModelError("Server Error", "Somthing went wrong while deleting category...!");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("Category deleted!");
+        }
     }
     
 }

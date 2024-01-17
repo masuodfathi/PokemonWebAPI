@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using YouTubeWebAPI.DTOs;
 using YouTubeWebAPI.Interface;
 using YouTubeWebAPI.Models;
+using YouTubeWebAPI.Repository;
 
 namespace YouTubeWebAPI.Controllers
 {
@@ -104,6 +105,29 @@ namespace YouTubeWebAPI.Controllers
             }
 
             return Ok("Reviewer updated successfully");
+        }
+
+        [HttpDelete("{reviewerId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public IActionResult DeleteReview(int reviewerId)
+        {
+            if (!_reviewerRepository.ReviewerExist(reviewerId))
+            {
+                ModelState.AddModelError("Error", "Reviewer does not exist!");
+                return StatusCode(404, ModelState);
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            if (!_reviewerRepository.DeleteReviewer(reviewerId))
+            {
+                ModelState.AddModelError("Server Error", "Somthing went wrong while deleting reviewer...!");
+                return StatusCode(500, ModelState);
+            }
+            return Ok("Reviewer deleted!");
         }
     }
 }
