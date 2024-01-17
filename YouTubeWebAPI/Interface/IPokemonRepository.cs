@@ -12,6 +12,7 @@ namespace YouTubeWebAPI.Interface
         bool PokemonExist(int pokemonId);
         bool CreatePokemon(PokemonDto pokemonDto);
         bool UpdatePokemon(Pokemon pokemon);
+        bool DeletePokemon(int pokemonId);
         bool Save();
     }
 }

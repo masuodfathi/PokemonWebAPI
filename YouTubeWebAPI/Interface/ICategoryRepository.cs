@@ -10,6 +10,7 @@ namespace YouTubeWebAPI.Interface
         bool CategoryExist(int Id);
         bool CreateCategory(Category category);
         bool UpdateCategory(Category category);
+        bool DeleteCategory(int id);
         bool Save();
     }
 }

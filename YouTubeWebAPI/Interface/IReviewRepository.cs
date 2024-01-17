@@ -10,6 +10,7 @@ namespace YouTubeWebAPI.Interface
         bool ReviewExist(int reviewId);
         bool CreateReview(Review review);
         bool UpdateReview(Review review);
+        bool DeleteReview(int reviewId);
         bool Save();
     }
 }

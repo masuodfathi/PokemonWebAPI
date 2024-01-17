@@ -12,6 +12,7 @@ namespace YouTubeWebAPI.Interface
         bool OwnerExist(int  ownerId);
         bool CreateOwner(Owner owner);
         bool UpdateOwner(Owner owner);
+        bool DeleteOwner(int ownerId);
         bool Save();
     }
 }

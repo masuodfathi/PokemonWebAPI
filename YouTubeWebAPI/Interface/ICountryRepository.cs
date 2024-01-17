@@ -12,6 +12,7 @@ namespace YouTubeWebAPI.Interface
         bool CountryExsits(int id);
         bool CreateCountry(Country country);
         bool UpdateCountry(Country country);
+        bool DeleteCountry(int id);
         bool Save();
     }
 }
