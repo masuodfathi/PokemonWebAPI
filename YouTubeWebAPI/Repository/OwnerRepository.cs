@@ -18,6 +18,17 @@ namespace YouTubeWebAPI.Repository
             return Save();
         }
 
+        public bool DeleteOwner(int ownerId)
+        {
+            var ownerToDelete = _context.Owners.Find(ownerId);
+            if (ownerToDelete != null)
+            {
+                _context.Owners.Remove(ownerToDelete);
+                return Save();
+            }
+            return false;
+        }
+
         public Owner GetOwner(string firstName)
         {
             return _context.Owners.Where(o => o.FirstName == firstName).FirstOrDefault();

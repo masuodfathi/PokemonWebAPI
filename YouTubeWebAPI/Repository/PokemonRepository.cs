@@ -42,6 +42,17 @@ namespace YouTubeWebAPI.Repository
             return Save();
         }
 
+        public bool DeletePokemon(int pokemonId)
+        {
+            var pokemonToDelete = _context.Pokemons.Find(pokemonId);
+            if (pokemonToDelete != null)
+            {
+                _context.Pokemons.Remove(pokemonToDelete);
+                return Save();
+            }
+            return false;
+        }
+
         public Pokemon GetPokemon(int id)
         {
             return _context.Pokemons.Where(p => p.Id == id).FirstOrDefault();

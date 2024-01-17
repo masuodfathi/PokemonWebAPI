@@ -18,6 +18,17 @@ namespace YouTubeWebAPI.Repository
             return Save();
         }
 
+        public bool DeleteReview(int reviewId)
+        {
+            var reviewToDelete = _context.Reviews.Find(reviewId);
+            if (reviewToDelete != null)
+            {
+                _context.Reviews.Remove(reviewToDelete);
+                return Save();
+            }
+            return false;
+        }
+
         public Review GetReview(int reviewId)
         {
             return _context.Reviews.Where(r => r.Id == reviewId).FirstOrDefault();
