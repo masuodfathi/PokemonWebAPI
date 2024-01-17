@@ -22,6 +22,18 @@ namespace YouTubeWebAPI.Repository
             return Save();
         }
 
+        public bool DeleteCountry(int id)
+        {
+            var countryToDelete = _contex.Countries.Find(id);
+            if (countryToDelete != null)
+            {
+                _contex.Countries.Remove(countryToDelete);
+                return Save();
+            }
+            return false;
+            
+        }
+
         public ICollection<Country> GetCountries()
         {
             var countryList = _contex.Countries.ToList();
