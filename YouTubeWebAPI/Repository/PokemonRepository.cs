@@ -65,14 +65,12 @@ namespace YouTubeWebAPI.Repository
 
         public decimal GetPokemonRating(int pokemonId)
         {
-            var reviews = _context.Reviews.Where(p => p.Pokemon.Id == pokemonId);
-            //decimal rating = 0;
-            //foreach (var review in reviews)
-            //{
-            //    rating += review.Rating;
-            //}
-            //return rating/reviews.Count();
-            return ((decimal)reviews.Sum(r=>r.Rating)/reviews.Count());
+            // A nullable average returns null for an empty set instead of dividing by zero.
+            var average = _context.Reviews
+                .Where(review => review.Pokemon.Id == pokemonId)
+                .Average(review => (double?)review.Rating);
+
+            return average.HasValue ? (decimal)average.Value : 0m;
         }
 
         public ICollection<Pokemon> GetPokemons()
