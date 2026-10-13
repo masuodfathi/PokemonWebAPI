@@ -115,10 +115,94 @@ namespace YouTubeWebAPI.Repository
             }
         }
 
-        public bool UpdatePokemon(Pokemon pokemon)
+        public PokemonUpdateResult UpdatePokemon(UpdatePokemonDto dto)
         {
-            _context.Update(pokemon);
-            return Save();
+            // Validate input before modifying tracked entities.
+            if (dto.Id <= 0 ||
+                string.IsNullOrWhiteSpace(dto.Name) ||
+                dto.OwnerIds == null || dto.OwnerIds.Count == 0 ||
+                dto.CategoryIds == null || dto.CategoryIds.Count == 0)
+            {
+                return PokemonUpdateResult.InvalidInput;
+            }
+
+            // Remove duplicate IDs from the requested relationships.
+            var ownerIds = dto.OwnerIds.ToHashSet();
+            var categoryIds = dto.CategoryIds.ToHashSet();
+
+            // Load the existing Pokemon and its relationship records.
+            var pokemon = _context.Pokemons
+                .Include(p => p.PokemonOwners)
+                .Include(p => p.PokemonCategories)
+                .FirstOrDefault(p => p.Id == dto.Id);
+
+            if (pokemon == null)
+                return PokemonUpdateResult.NotFound;
+
+            // Confirm that every requested owner exists.
+            var ownerCount = _context.Owners
+                .Count(owner => ownerIds.Contains(owner.Id));
+
+            if (ownerCount != ownerIds.Count)
+                return PokemonUpdateResult.InvalidOwner;
+
+            // Confirm that every requested category exists.
+            var categoryCount = _context.Categories
+                .Count(category => categoryIds.Contains(category.Id));
+
+            if (categoryCount != categoryIds.Count)
+                return PokemonUpdateResult.InvalidCategory;
+
+            // Update the Pokemon's own properties.
+            pokemon.Name = dto.Name.Trim();
+            pokemon.BirthDate = dto.BirthDate;
+
+            // Remove owner relationships that are no longer requested.
+            var ownersToRemove = pokemon.PokemonOwners
+                .Where(link => !ownerIds.Contains(link.OwnerId))
+                .ToList();
+
+            _context.PokemonOwners.RemoveRange(ownersToRemove);
+
+            // Add only owner relationships that do not already exist.
+            var existingOwnerIds = pokemon.PokemonOwners
+                .Select(link => link.OwnerId)
+                .ToHashSet();
+
+            foreach (var ownerId in ownerIds.Except(existingOwnerIds))
+            {
+                pokemon.PokemonOwners.Add(new PokemonOwner
+                {
+                    PokemonId = pokemon.Id,
+                    OwnerId = ownerId
+                });
+            }
+
+            // Remove category relationships that are no longer requested.
+            var categoriesToRemove = pokemon.PokemonCategories
+                .Where(link => !categoryIds.Contains(link.CategoryID))
+                .ToList();
+
+            _context.PokemonCategories.RemoveRange(categoriesToRemove);
+
+            // Add only category relationships that do not already exist.
+            var existingCategoryIds = pokemon.PokemonCategories
+                .Select(link => link.CategoryID)
+                .ToHashSet();
+
+            foreach (var categoryId in categoryIds.Except(existingCategoryIds))
+            {
+                pokemon.PokemonCategories.Add(new PokemonCategory
+                {
+                    PokemonId = pokemon.Id,
+                    CategoryID = categoryId
+                });
+            }
+
+            // Persist all changes together; unchanged input is also successful.
+            _context.SaveChanges();
+
+            return PokemonUpdateResult.Updated;
         }
     }
 }
