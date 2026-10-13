@@ -1,0 +1,272 @@
+diff --git a/.github/workflows/dotnet.yml b/.github/workflows/dotnet.yml
+new file mode 100644
+index 0000000..b3974c4
+--- /dev/null
++++ b/.github/workflows/dotnet.yml
+@@ -0,0 +1,16 @@
++name: .NET checks
++on:
++  push:
++  pull_request:
++permissions:
++  contents: read
++jobs:
++  test:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++      - uses: actions/setup-dotnet@v4
++        with:
++          dotnet-version: '8.0.x'
++      - name: Run rating regression tests
++        run: dotnet test tests/PokemonWebAPI.Tests/PokemonWebAPI.Tests.csproj --configuration Release
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..d87ac3d
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,93 @@
++# Pokemon Review API
++
++A learning project built with ASP.NET Core that manages Pokémon, owners, categories, reviewers, and reviews. It demonstrates REST controllers, dependency injection, Entity Framework Core relationships, repository interfaces, and DTO mapping.
++
++The source project and namespaces retain the original `YouTubeWebAPI` name.
++
++## Stack
++
++- C# / .NET 8 / ASP.NET Core
++- Entity Framework Core 8 with SQL Server
++- AutoMapper and Swagger / OpenAPI
++- xUnit with an in-memory SQLite database for rating regression tests
++
++## Run locally
++
++Prerequisites: .NET 8 SDK and a running SQL Server instance accessible from your machine. SQL Server may run separately or in a compatible container. Linux users need a SQL Server connection; Windows LocalDB is not required.
++
++Run these commands from the repository root. Use a local development database and replace the placeholders with your server details.
++
++```bash
++dotnet restore YouTubeWebAPI.sln
++dotnet user-secrets init --project YouTubeWebAPI
++dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
++  "Server=localhost,1433;Database=PokemonReview;User Id=<user>;Password=<password>;Encrypt=True;TrustServerCertificate=True" \
++  --project YouTubeWebAPI
++dotnet tool install --global dotnet-ef --version '8.0.*'
++dotnet ef database update --project YouTubeWebAPI
++dotnet run --project YouTubeWebAPI --launch-profile http
++```
++
++If `dotnet-ef` is already installed, use `dotnet tool update` instead. On Linux, ensure `$HOME/.dotnet/tools` is on your `PATH`. The certificate setting above is for a local development server.
++
++Open **http://localhost:5106/swagger** to explore the endpoints.
++
++To insert sample data, stop the server and run:
++
++```bash
++dotnet run --project YouTubeWebAPI --launch-profile http -- seeddata
++```
++
++The database migrations must already be applied. This command seeds sample Pokémon when the owner relationship table is empty, then starts the server.
++
++## Pokémon endpoints
++
++| Method | Path | Purpose |
++| --- | --- | --- |
++| GET | `/api/Pokemon` | List Pokémon |
++| GET | `/api/Pokemon/{id}` | Get one Pokémon |
++| GET | `/api/Pokemon/{id}/rating` | Get average review rating |
++| POST | `/api/Pokemon` | Create a Pokémon with owner and category IDs |
++| PUT | `/api/Pokemon` | Update a Pokémon using its ID in the body |
++| DELETE | `/api/Pokemon/{id}` | Delete a Pokémon |
++
++Additional controllers expose categories, countries, owners, reviews, and reviewers. Swagger lists the available operations.
++
++An existing Pokémon without reviews has rating `0`; an unknown Pokémon returns `404` from the rating endpoint.
++
++Example create body (use existing owner and category IDs):
++
++```json
++{
++  "name": "Eevee",
++  "birthDate": "2000-01-01T00:00:00",
++  "ownerId": 1,
++  "categoryId": 1
++}
++```
++
++## Tests
++
++```bash
++dotnet test tests/PokemonWebAPI.Tests/PokemonWebAPI.Tests.csproj --configuration Release
++```
++
++Tests cover empty reviews, fractional and single-review averages, separation between Pokémon, and controller action results for existing and missing IDs. They use SQLite and do not require SQL Server. These are repository and controller tests, not full HTTP integration tests. GitHub Actions runs the same command.
++
++## Current limitations
++
++This is a learning project. Authentication, pagination, consistent error responses, and complete input validation remain improvements to make. Repository write methods currently suppress database exceptions, and owner/category validation needs improvement. Tests currently focus on the rating behavior.
++
++## Structure
++
++```text
++YouTubeWebAPI/
++  Controllers/  HTTP endpoints
++  DTOs/         Transfer objects
++  Data/         EF Core context
++  Models/       Database entities
++  Interface/    Repository contracts
++  Repository/   Data access
++  Migrations/   SQL Server schema history
++tests/          Rating regression tests
++```
+diff --git a/YouTubeWebAPI/Repository/PokemonRepository.cs b/YouTubeWebAPI/Repository/PokemonRepository.cs
+index 7ddfeb0..df1a19b 100644
+--- a/YouTubeWebAPI/Repository/PokemonRepository.cs
++++ b/YouTubeWebAPI/Repository/PokemonRepository.cs
+@@ -65,14 +65,12 @@ namespace YouTubeWebAPI.Repository
+ 
+         public decimal GetPokemonRating(int pokemonId)
+         {
+-            var reviews = _context.Reviews.Where(p => p.Pokemon.Id == pokemonId);
+-            //decimal rating = 0;
+-            //foreach (var review in reviews)
+-            //{
+-            //    rating += review.Rating;
+-            //}
+-            //return rating/reviews.Count();
+-            return ((decimal)reviews.Sum(r=>r.Rating)/reviews.Count());
++            // A nullable average returns null for an empty set instead of dividing by zero.
++            var average = _context.Reviews
++                .Where(review => review.Pokemon.Id == pokemonId)
++                .Average(review => (double?)review.Rating);
++
++            return average.HasValue ? (decimal)average.Value : 0m;
+         }
+ 
+         public ICollection<Pokemon> GetPokemons()
+diff --git a/tests/PokemonWebAPI.Tests/PokemonRatingTests.cs b/tests/PokemonWebAPI.Tests/PokemonRatingTests.cs
+new file mode 100644
+index 0000000..a41d621
+--- /dev/null
++++ b/tests/PokemonWebAPI.Tests/PokemonRatingTests.cs
+@@ -0,0 +1,94 @@
++using AutoMapper;
++using Microsoft.AspNetCore.Mvc;
++using Microsoft.Data.Sqlite;
++using Microsoft.EntityFrameworkCore;
++using YouTubeWebAPI.Controllers;
++using YouTubeWebAPI.Data;
++using YouTubeWebAPI.Helper;
++using YouTubeWebAPI.Models;
++using YouTubeWebAPI.Repository;
++using Xunit;
++
++namespace PokemonWebAPI.Tests;
++
++public sealed class PokemonRatingTests : IDisposable
++{
++    private readonly SqliteConnection _connection;
++    private readonly DataContext _context;
++    private readonly PokemonRepository _repository;
++    private readonly PokemonController _controller;
++
++    public PokemonRatingTests()
++    {
++        // Keep a relational, in-memory database open for the lifetime of each test.
++        _connection = new SqliteConnection("Data Source=:memory:");
++        _connection.Open();
++        var options = new DbContextOptionsBuilder<DataContext>()
++            .UseSqlite(_connection).Options;
++        _context = new DataContext(options);
++        _context.Database.EnsureCreated();
++        var mapper = new MapperConfiguration(config =>
++            config.AddProfile<MappingProfiles>()).CreateMapper();
++        _repository = new PokemonRepository(_context, mapper);
++        _controller = new PokemonController(_repository, new OwnerRepository(_context), mapper);
++    }
++
++    [Fact]
++    public void Rating_without_reviews_is_zero()
++    {
++        var pokemon = AddPokemon("Pikachu");
++        Assert.Equal(0m, _repository.GetPokemonRating(pokemon.Id));
++    }
++
++    [Theory]
++    [InlineData(new[] { 5 }, 5.0)]
++    [InlineData(new[] { 1, 2 }, 1.5)]
++    [InlineData(new[] { 1, 3, 5 }, 3.0)]
++    public void Rating_is_the_average_of_only_the_requested_pokemon(int[] ratings, double expected)
++    {
++        var pokemon = AddPokemon("Pikachu", ratings);
++        AddPokemon("Squirtle", 1, 1, 1);
++        Assert.Equal((decimal)expected, _repository.GetPokemonRating(pokemon.Id));
++    }
++
++    [Fact]
++    public void Rating_action_returns_ok_with_zero_when_no_reviews_exist()
++    {
++        var pokemon = AddPokemon("Pikachu");
++        var result = Assert.IsType<OkObjectResult>(_controller.GetPokemonRating(pokemon.Id));
++        Assert.Equal(0m, Assert.IsType<decimal>(result.Value));
++    }
++
++    [Fact]
++    public void Rating_action_returns_not_found_for_an_unknown_pokemon()
++    {
++        Assert.IsType<NotFoundResult>(_controller.GetPokemonRating(999));
++    }
++
++    private Pokemon AddPokemon(string name, params int[] ratings)
++    {
++        var pokemon = new Pokemon
++        {
++            Name = name,
++            BirthDate = new DateTime(2000, 1, 1),
++            PokemonCategories = new List<PokemonCategory>(),
++            PokemonOwners = new List<PokemonOwner>(),
++            Reviews = ratings.Select(rating => new Review
++            {
++                Title = "Test review",
++                Text = "Test review content",
++                Rating = rating,
++                Reviewer = new Reviewer { FirstName = "Test", LastName = "Reviewer" }
++            }).ToList()
++        };
++        _context.Pokemons.Add(pokemon);
++        _context.SaveChanges();
++        return pokemon;
++    }
++
++    public void Dispose()
++    {
++        _context.Dispose();
++        _connection.Dispose();
++    }
++}
+diff --git a/tests/PokemonWebAPI.Tests/PokemonWebAPI.Tests.csproj b/tests/PokemonWebAPI.Tests/PokemonWebAPI.Tests.csproj
+new file mode 100644
+index 0000000..79972ff
+--- /dev/null
++++ b/tests/PokemonWebAPI.Tests/PokemonWebAPI.Tests.csproj
+@@ -0,0 +1,20 @@
++<Project Sdk="Microsoft.NET.Sdk">
++  <PropertyGroup>
++    <TargetFramework>net8.0</TargetFramework>
++    <ImplicitUsings>enable</ImplicitUsings>
++    <Nullable>enable</Nullable>
++    <IsPackable>false</IsPackable>
++    <IsTestProject>true</IsTestProject>
++  </PropertyGroup>
++  <ItemGroup>
++    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
++    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
++    <PackageReference Include="xunit" Version="2.5.3" />
++    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3">
++      <PrivateAssets>all</PrivateAssets>
++    </PackageReference>
++  </ItemGroup>
++  <ItemGroup>
++    <ProjectReference Include="../../YouTubeWebAPI/YouTubeWebAPI.csproj" />
++  </ItemGroup>
++</Project>

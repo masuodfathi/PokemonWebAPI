@@ -29,7 +29,26 @@ namespace YouTubeWebAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            return Ok(pokemons);
+
+            // Convert database entities into the public response shape.
+            var response = pokemons.Select(p => new PokemonResponseDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                BirthDate = p.BirthDate,
+                Categories = p.PokemonCategories.Select(pc => new PokemonCategoryResponseDto
+                {
+                    Id = pc.Category.Id,
+                    Name = pc.Category.Name
+                }).ToList(),
+                Owners = p.PokemonOwners.Select(po => new PokemonOwnerResponseDto
+                {
+                    Id = po.Owner.Id,
+                    FirstName = po.Owner.FirstName,
+                    LastName = po.Owner.LastName
+                }).ToList()
+            }).ToList();
+            return Ok(response);
         }
         [HttpGet("{pokeId}")]
         [ProducesResponseType(200,Type = typeof(Pokemon))]
@@ -45,7 +64,25 @@ namespace YouTubeWebAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            return Ok(pokemon);
+
+            var response = new PokemonResponseDto
+            {
+                Id = pokemon.Id,
+                Name = pokemon.Name,
+                BirthDate = pokemon.BirthDate,
+                Categories = pokemon.PokemonCategories.Select(pc => new PokemonCategoryResponseDto
+                {
+                    Id = pc.Category.Id,
+                    Name = pc.Category.Name
+                }).ToList(),
+                Owners = pokemon.PokemonOwners.Select(po => new PokemonOwnerResponseDto
+                {
+                    Id = po.Owner.Id,
+                    FirstName = po.Owner.FirstName,
+                    LastName = po.Owner.LastName
+                }).ToList()
+            };
+            return Ok(response);
         }
         [HttpGet("{pokeId}/rating")]
         [ProducesResponseType(200,Type = typeof(decimal))]

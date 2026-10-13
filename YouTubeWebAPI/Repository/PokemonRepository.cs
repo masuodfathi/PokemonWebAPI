@@ -3,6 +3,7 @@ using YouTubeWebAPI.Data;
 using YouTubeWebAPI.DTOs;
 using YouTubeWebAPI.Interface;
 using YouTubeWebAPI.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace YouTubeWebAPI.Repository
 {
@@ -55,12 +56,23 @@ namespace YouTubeWebAPI.Repository
 
         public Pokemon GetPokemon(int id)
         {
-            return _context.Pokemons.Where(p => p.Id == id).FirstOrDefault();
+            // Load the requested Pokemon and its related data.
+            return _context.Pokemons
+                .Include(p => p.PokemonOwners)
+                    .ThenInclude(po => po.Owner)
+                .Include(p => p.PokemonCategories)
+                    .ThenInclude(pc => pc.Category)
+                .FirstOrDefault(p => p.Id == id);
         }
 
         public Pokemon GetPokemon(string name)
         {
-            return _context.Pokemons.Where(p => p.Name == name).FirstOrDefault();
+            return _context.Pokemons.Where(p => p.Name == name)
+                .Include(p => p.PokemonOwners)
+                    .ThenInclude(po => po.Owner)
+                .Include(p => p.PokemonCategories)
+                    .ThenInclude(pc => pc.Category)
+                .FirstOrDefault();
         }
 
         public decimal GetPokemonRating(int pokemonId)
@@ -75,7 +87,14 @@ namespace YouTubeWebAPI.Repository
 
         public ICollection<Pokemon> GetPokemons()
         {
-            return _context.Pokemons.OrderBy(p => p.Id).ToList();
+            // Load Pokemon records together with their owners and categories.
+            return _context.Pokemons
+                .Include(p => p.PokemonOwners)
+                    .ThenInclude(po => po.Owner)
+                .Include(p => p.PokemonCategories)
+                    .ThenInclude(pc => pc.Category)
+                .OrderBy(p => p.Id)
+                .ToList();
         }
 
         public bool PokemonExist(int pokemonId)
