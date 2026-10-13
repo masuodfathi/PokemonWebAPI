@@ -133,22 +133,32 @@ namespace YouTubeWebAPI.Controllers
         [ProducesResponseType(400)]
         public IActionResult UpdatePokemon(PokemonDto updatedPokemon)
         {
+            // Check whether an input object was provided.
             if (updatedPokemon == null)
                 return BadRequest(ModelState);
 
+            // Check input validation results.
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Check whether the requested Pokemon exists.
             if (!_pokemonRepository.PokemonExist(updatedPokemon.Id))
             {
                 ModelState.AddModelError("Error", "Not Found");
                 return StatusCode(404, ModelState);
             }
 
+            // Convert the input DTO to a Pokemon entity.
             var updatedPokemonMap = _mapper.Map<Pokemon>(updatedPokemon);
+
+            // Ask the repository to save the changes.
             if (!_pokemonRepository.UpdatePokemon(updatedPokemonMap))
             {
-                ModelState.AddModelError("Server Error", "Something went wrong while saving...!");
+                ModelState.AddModelError(
+                    "Server Error",
+                    "Something went wrong while saving..."
+                );
+
                 return StatusCode(500, ModelState);
             }
 
