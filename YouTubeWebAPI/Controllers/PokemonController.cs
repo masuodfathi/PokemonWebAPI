@@ -128,40 +128,31 @@ namespace YouTubeWebAPI.Controllers
         }
 
         [HttpPut]
-        [ProducesResponseType(200)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(400)]
-        public IActionResult UpdatePokemon(PokemonDto updatedPokemon)
+        public IActionResult UpdatePokemon([FromBody] UpdatePokemonDto updatedPokemon)
         {
-            // Check whether an input object was provided.
-            if (updatedPokemon == null)
-                return BadRequest(ModelState);
-
             // Check input validation results.
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+            
+            //// Let the repository validate and synchronize the relationships.
+            var result = _pokemonRepository.UpdatePokemon(updatedPokemon);
 
-            // Check whether the requested Pokemon exists.
-            if (!_pokemonRepository.PokemonExist(updatedPokemon.Id))
+            switch (result)
             {
-                ModelState.AddModelError("Error", "Not Found");
-                return StatusCode(404, ModelState);
+                case PokemonUpdateResult.NotFound:
+                    return NotFound(new { error = "Pokemon not found." });
+                case PokemonUpdateResult.InvalidInput:
+                    return BadRequest(new { error = "Invalid input data." });
+                case PokemonUpdateResult.InvalidOwner:
+                    return BadRequest(new { error = "One or more owner IDs are invalid." });
+                case PokemonUpdateResult.InvalidCategory:
+                    return BadRequest(new { error = "One or more category IDs are invalid." });
+                case PokemonUpdateResult.Updated:
+                    return Ok(new { message = "Pokemon updated successfully." });
+                default:
+                    return StatusCode(500, new { error = "An unexpected error occurred." });
+                
             }
-
-            // Convert the input DTO to a Pokemon entity.
-            var updatedPokemonMap = _mapper.Map<Pokemon>(updatedPokemon);
-
-            // Ask the repository to save the changes.
-            if (!_pokemonRepository.UpdatePokemon(updatedPokemonMap))
-            {
-                ModelState.AddModelError(
-                    "Server Error",
-                    "Something went wrong while saving..."
-                );
-
-                return StatusCode(500, ModelState);
-            }
-
             return Ok("Pokemon updated successfully");
         }
 
